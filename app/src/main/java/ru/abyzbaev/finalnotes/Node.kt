@@ -1,72 +1,58 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcelable
+import android.os.Parcel
+import android.os.Parcelable.Creator
 
-public class Node implements Parcelable {
-    private String title;
-    private String description;
-    private String id;
+class Node : Parcelable {
+    var title: String?
+    var description: String?
+    var id: String? = null
 
-    public Node(String title, String description) {
-        this.title = title;
-        this.description = description;
-    }
-    public Node(String id, String title, String description) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
+    constructor(title: String?, description: String?) {
+        this.title = title
+        this.description = description
     }
 
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-
-
-    protected Node(Parcel in) {
-        title = in.readString();
-        description = in.readString();
+    constructor(id: String?, title: String?, description: String?) {
+        this.id = id
+        this.title = title
+        this.description = description
     }
 
-    public static final Creator<Node> CREATOR = new Creator<Node>() {
-        @Override
-        public Node createFromParcel(Parcel in) {
-            return new Node(in);
+    protected constructor(`in`: Parcel) {
+        title = `in`.readString()
+        description = `in`.readString()
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(title)
+        dest.writeString(description)
+    }
+
+    /*companion object {
+        val CREATOR: Creator<Node?> = object : Creator<Node?> {
+            override fun createFromParcel(`in`: Parcel): Node? {
+                return Node(`in`)
+            }
+
+            override fun newArray(size: Int): Array<Node?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }*/
+
+    companion object CREATOR : Creator<Node> {
+        override fun createFromParcel(parcel: Parcel): Node {
+            return Node(parcel)
         }
 
-        @Override
-        public Node[] newArray(int size) {
-            return new Node[size];
+        override fun newArray(size: Int): Array<Node?> {
+            return arrayOfNulls(size)
         }
-    };
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(title);
-        dest.writeString(description);
     }
 }

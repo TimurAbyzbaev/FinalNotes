@@ -1,146 +1,100 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import static android.content.Context.MODE_PRIVATE;
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.os.Parcelable
+import android.widget.EditText
+import android.text.TextWatcher
+import android.text.Editable
+import android.view.View
+import androidx.fragment.app.Fragment
 
-import android.app.Activity;
-import android.content.SharedPreferences;
-import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.ListFragment;
-
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-
-import com.google.gson.GsonBuilder;
-import static ru.abyzbaev.finalnotes.NotesFragment.DATA_KEY;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-
-public class NodeFragment extends Fragment {
-
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String SELECTED_NODE = "SELECTED_NODE";
+class NodeFragment : Fragment() {
     //private SharedPreferences sharedPreferences;
-    private Node node;
-
-    public NodeFragment() {
-        // Required empty public constructor
-    }
-
-
-    public static NodeFragment newInstance(Node node) {
-        NodeFragment fragment = new NodeFragment();
-        Bundle args = new Bundle();
-        args.putParcelable(SELECTED_NODE, node);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var node: Node? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         //sharedPreferences = getActivity().getPreferences(MODE_PRIVATE);
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_node, container, false);
+        return inflater.inflate(R.layout.fragment_node, container, false)
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        Bundle arguments = getArguments();
-        if(arguments != null){
-            Node paramNode = (Node) arguments.getParcelable(SELECTED_NODE);
-            if(paramNode != null)
-                node = paramNode;
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val arguments = arguments
+        if (arguments != null) {
+            val paramNode = arguments.getParcelable<Parcelable>(SELECTED_NODE) as Node?
+            if (paramNode != null) node = paramNode
         }
-        initTv(view);
+        initTv(view)
     }
 
-    private void initTv(View view){
-        EditText title = view.findViewById(R.id.note_title_edit);
-        title.setText(node.getTitle());
-        title.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+    private fun initTv(view: View) {
+        val title = view.findViewById<EditText>(R.id.note_title_edit)
+        title.setText(node!!.title)
+        title.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                node!!.title = title.text.toString()
+                updateData(node)
             }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                node.setTitle(title.getText().toString());
-                updateData(node);
+            override fun afterTextChanged(s: Editable) {}
+        })
+        val description = view.findViewById<EditText>(R.id.note_description_edit)
+        description.setText(node!!.description)
+        description.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                node!!.description = description.text.toString()
+                updateData(node)
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-
-        EditText description = view.findViewById(R.id.note_description_edit);
-        description.setText(node.getDescription());
-        description.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                node.setDescription(description.getText().toString());
-                updateData(node);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
+            override fun afterTextChanged(s: Editable) {}
+        })
     }
 
+    private val notesFragment: NotesFragment
+        private get() = requireActivity()
+            .supportFragmentManager
+            .fragments
+            .stream()
+            .filter { fragment: Fragment? -> fragment is NotesFragment }
+            .findFirst()
+            .get() as NotesFragment
 
-
-    private NotesFragment getNotesFragment(){
-        return (NotesFragment) requireActivity()
-                .getSupportFragmentManager()
-                .getFragments()
-                .stream()
-                .filter(fragment -> fragment instanceof NotesFragment)
-                .findFirst()
-                .get();
-    }
-
-    private void updateData(Node updatedNode){
+    private fun updateData(updatedNode: Node?) {
         //String jsonData = new GsonBuilder().create().toJson(getNotesFragment().getNotes());
         //sharedPreferences.edit().putString(DATA_KEY,jsonData).apply();
-
-        getNotesFragment().updateData(updatedNode);
+        notesFragment.updateData(updatedNode)
     }
 
-    private Node collectNodeData(){
-        String title = node.getTitle();
-        String description = node.getDescription();
-        String id = node.getId();
-        Node answer;
-        answer = new Node(id,title,description);
-        return answer;
+    private fun collectNodeData(): Node {
+        val title = node!!.title
+        val description = node!!.description
+        val id = node!!.id
+        val answer: Node
+        answer = Node(id, title, description)
+        return answer
     }
 
+    companion object {
+        // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+        private const val SELECTED_NODE = "SELECTED_NODE"
+        @JvmStatic
+        fun newInstance(node: Node?): NodeFragment {
+            val fragment = NodeFragment()
+            val args = Bundle()
+            args.putParcelable(SELECTED_NODE, node)
+            fragment.arguments = args
+            return fragment
+        }
+    }
 }

@@ -1,5 +1,7 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-public interface NodeListResponse {
-    void initialized(NodeListSource nodeListSource);
+import ru.abyzbaev.finalnotes.NodeListSource
+
+interface NodeListResponse {
+    fun initialized(nodeListSource: NodeListSource?)
 }

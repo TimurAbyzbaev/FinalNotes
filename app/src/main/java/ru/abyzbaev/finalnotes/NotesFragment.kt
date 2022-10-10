@@ -1,214 +1,190 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.RecyclerView;
+import ru.abyzbaev.finalnotes.NodeFragment.Companion.newInstance
+//import ru.abyzbaev.finalnotes.NodeListSource.nodeList
+//import ru.abyzbaev.finalnotes.NodeListSource.size
 
-import android.os.CountDownTimer;
-import android.provider.ContactsContract;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.PopupMenu;
-import android.widget.TextView;
-import android.widget.Toast;
+import ru.abyzbaev.finalnotes.NodeListSource
+import androidx.recyclerview.widget.RecyclerView
+import ru.abyzbaev.finalnotes.NotesAdapter
+import android.content.SharedPreferences
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import ru.abyzbaev.finalnotes.R
+import ru.abyzbaev.finalnotes.NodeListSourceFirebaseImpl
+import ru.abyzbaev.finalnotes.NodeListResponse
+import android.widget.Toast
+import android.widget.TextView
+import ru.abyzbaev.finalnotes.NodeFragment
+import android.app.Activity
+import android.view.View
+import android.widget.PopupMenu
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import java.util.ArrayList
 
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-public class NotesFragment extends Fragment implements NodeListSource{
+class NotesFragment : Fragment(), NodeListSource {
     //private ArrayList<Node> notes;
-    private NodeListSource data;
-    private RecyclerView recyclerView;
-    private NotesAdapter notesAdapter;
-    static final String DATA_KEY = "DATA_KEY";
-    private SharedPreferences sharedPreferences;
-    public NotesFragment(){
-
-
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    private var data: NodeListSource? = null
+    private var recyclerView: RecyclerView? = null
+    private var notesAdapter: NotesAdapter? = null
+    private val sharedPreferences: SharedPreferences? = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         //sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
-
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_notes, container, false);
-        notesAdapter = new NotesAdapter();
-        data = new NodeListSourceFirebaseImpl().init(new NodeListResponse() {
-            @Override
-            public void initialized(NodeListSource nodeListSource) {
-                notesAdapter.notifyDataSetChanged();
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_notes, container, false)
+        notesAdapter = NotesAdapter()
+        data = NodeListSourceFirebaseImpl().init(object : NodeListResponse {
+            override fun initialized(nodeListSource: NodeListSource?) {
+                notesAdapter!!.notifyDataSetChanged()
             }
-        });
-        notesAdapter.setDataSource(data);
-        recyclerView = view.findViewById(R.id.recycle_view);
-        initRecycleView(recyclerView);
-        return view;
+        })
+        notesAdapter!!.setDataSource(data)
+        recyclerView = view.findViewById(R.id.recycle_view)
+        initRecycleView(recyclerView)
+        return view
     }
 
-
-
-
-    private void initRecycleView(RecyclerView recyclerView) {
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(notesAdapter);
-        notesAdapter.setItemClickListener(new OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-                Toast.makeText(getContext(), ((TextView)view).getText(), Toast.LENGTH_SHORT).show();
-                showNodeFragment(position);
+    private fun initRecycleView(recyclerView: RecyclerView?) {
+        recyclerView!!.setHasFixedSize(true)
+        recyclerView.adapter = notesAdapter
+        notesAdapter!!.setItemClickListener(object : OnItemClickListener {
+            override fun onItemClick(view: View?, position: Int) {
+                Toast.makeText(context, (view as TextView).text, Toast.LENGTH_SHORT).show()
+                showNodeFragment(position)
             }
-            @Override
-            public void onItemLongClick(View view, int position) {
-                initPopupMenu(view,position);
+
+            override fun onItemLongClick(view: View?, position: Int) {
+                if (view != null) {
+                    initPopupMenu(view, position)
+                }
             }
-        });
+        })
     }
 
-    private void showNodeFragment(int position) {
-        NodeFragment nodeFragment = NodeFragment.newInstance(data.getNodeList().get(position));
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .add(R.id.notes_container, nodeFragment)
-                .addToBackStack("")
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                .commit();
+    private fun showNodeFragment(position: Int) {
+        val nodeFragment = newInstance(data?.getNodeList()?.get(position))
+        requireActivity().supportFragmentManager
+            .beginTransaction()
+            .add(R.id.notes_container, nodeFragment)
+            .addToBackStack("")
+            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+            .commit()
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
     }
 
-    public void initRecycleView() {
-        initRecycleView(recyclerView);
-    }
-    public ArrayList<Node> getNotes(){
-        return data.getNodeList();
-    }
-    public void addNote(){
-        data.addNode(new Node("Заметка", "123"));
+    /*fun initRecycleView() {
+        initRecycleView(recyclerView)
+    }*/
+
+    fun addNote() {
+        data!!.addNode(Node("Заметка", "123"))
         //data.getNodeList();
         //notesAdapter.setDataSource(data);
-        updateData();
+        updateData()
         //notesAdapter.notifyItemInserted(data.size());
-        System.out.println("size = " + data.size());
+        println("size = " + data!!.size())
     }
 
-
-    public void updateData(){
+    fun updateData() {
         //notesAdapter.notifyItemInserted();
-        data = new NodeListSourceFirebaseImpl().init(new NodeListResponse() {
-            @Override
-            public void initialized(NodeListSource nodeListSource) {
-                notesAdapter.notifyDataSetChanged();
+        data = NodeListSourceFirebaseImpl().init(object : NodeListResponse {
+            override fun initialized(nodeListSource: NodeListSource?) {
+                notesAdapter!!.notifyDataSetChanged()
             }
-        });
-        notesAdapter.setDataSource(data);
-        initRecycleView(recyclerView);
+        })
+        notesAdapter!!.setDataSource(data)
+        initRecycleView(recyclerView)
         //saveData();
     }
 
-    public void updateData(Node updatedNode){
-        data.updateNode(updatedNode);
-        updateData();
+    fun updateData(updatedNode: Node?) {
+        data!!.updateNode(updatedNode)
+        updateData()
     }
 
-
-    private void initPopupMenu(View view, int position){
-        Activity activity = requireActivity();
-        PopupMenu popupMenu = new PopupMenu(activity, view);
-        activity.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()){
-                    case R.id.action_popup_delete:
-                        //TODO delete note
-                        deleteNode(position);
-                        return true;
-                    case R.id.action_popup_edit:
-                        showNodeFragment(position);
-                        return true;
+    private fun initPopupMenu(view: View, position: Int) {
+        val activity: Activity = requireActivity()
+        val popupMenu = PopupMenu(activity, view)
+        activity.menuInflater.inflate(R.menu.popup_menu, popupMenu.menu)
+        popupMenu.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_popup_delete -> {
+                    //TODO delete note
+                    deleteNode(position)
+                    return@OnMenuItemClickListener true
                 }
-                return true;
+                R.id.action_popup_edit -> {
+                    showNodeFragment(position)
+                    return@OnMenuItemClickListener true
+                }
             }
-        });
-        popupMenu.show();
+            true
+        })
+        popupMenu.show()
     }
 
-    private void showSnackbar(int position, Node tempNode) {
+    private fun showSnackbar(position: Int, tempNode: Node) {
         Snackbar.make(requireView(), "Заметка удалена", BaseTransientBottomBar.LENGTH_LONG)
-                .setAction("Return", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        data.addNode(tempNode);
-                        updateData();
-                    }
-                }).show();
+            .setAction("Return") {
+                data!!.addNode(tempNode)
+                updateData()
+            }.show()
     }
 
-    @Override
-    public NodeListSource init(NodeListResponse nodeListResponse) {
-        if(nodeListResponse != null){
-            nodeListResponse.initialized(this);
-        }
-        return this;
+    override fun init(nodeListResponse: NodeListResponse?): NodeListSource? {
+        nodeListResponse?.initialized(this)
+        return this
     }
 
-    @Override
-    public ArrayList<Node> getNodeList() {
-        return data.getNodeList();
+    override fun getNodeList(): ArrayList<Node> {
+        TODO("Not yet implemented")
     }
 
-    @Override
-    public int size() {
-        return 0;
+    /*val nodeList: ArrayList<Node?>?
+        get() = data.nodeList*/
+
+    override fun size(): Int {
+        return 0
     }
 
-    @Override
-    public void deleteNode(int position) {
+    override fun deleteNode(position: Int) {
         //TODO deleteNote
-        Toast.makeText(requireContext(),"удаление", Toast.LENGTH_SHORT).show();
-        Node tempNode = data.getNodeList().get(position);
+        Toast.makeText(requireContext(), "удаление", Toast.LENGTH_SHORT).show()
+        val tempNode: Node? = data?.getNodeList()?.get(position)
+        //val tempNode: Node = data.nodeList.get(position)
         //data.getNodeList().remove(position);
-        data.deleteNode(position);
-        updateData();
-        showSnackbar(position, tempNode);
-        
-
+        data!!.deleteNode(position)
+        updateData()
+        if (tempNode != null) {
+            showSnackbar(position, tempNode)
+        }
     }
 
-    @Override
-    public void updateNode(Node node) {
-        data.updateNode(node);
+    override fun updateNode(node: Node?) {
+        data!!.updateNode(node)
     }
 
-    @Override
-    public void addNode(Node node) {
-        data.getNodeList().add(new Node("Заметка", ""));
-        updateData();
-        System.out.println(data.getNodeList().size());
+    override fun addNode(node: Node?) {
+        data?.getNodeList()?.add(Node("Заметка", ""))
+        updateData()
+        //println(data.getNodeList().size)
+    }
+
+    companion object {
+        const val DATA_KEY = "DATA_KEY"
     }
 }

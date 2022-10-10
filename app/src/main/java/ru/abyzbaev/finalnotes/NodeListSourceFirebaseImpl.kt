@@ -1,111 +1,88 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import android.util.Log;
+import android.util.Log
+import ru.abyzbaev.finalnotes.NodeDataMapping.toNode
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-
-import java.util.ArrayList;
-import java.util.Map;
-
-public class NodeListSourceFirebaseImpl implements NodeListSource{
-    private static final String NOTES_COLECTION = "notes";
-    private static final String TAG = "[NodeListSourceFirebaseImpl]";
-    private static final String ID = "ID";
+import ru.abyzbaev.finalnotes.NodeDataMapping.toDocument
+import ru.abyzbaev.finalnotes.NodeListSource
+import ru.abyzbaev.finalnotes.NodeListSourceFirebaseImpl
+import ru.abyzbaev.finalnotes.NodeListResponse
+import ru.abyzbaev.finalnotes.NodeDataMapping
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.firestore.*
 
 
+class NodeListSourceFirebaseImpl : NodeListSource {
     //База данных Firebase
-    private FirebaseFirestore store = FirebaseFirestore.getInstance();
+    private val store = FirebaseFirestore.getInstance()
 
     //Коллекция документов
-    private CollectionReference collection = store.collection(NOTES_COLECTION);
+    private val collection = store.collection(NOTES_COLECTION)
 
     //Загружаемый список заметок
-    private ArrayList<Node> notes = new ArrayList<>();
+    private var nodeList = ArrayList<Node>()
 
-    @Override
-    public NodeListSource init(NodeListResponse nodeListResponse) {
+    override fun init(nodeListResponse: NodeListResponse?): NodeListSource? {
         //получить всю коллекцию отсортированную по полю ID
         collection.orderBy(NodeDataMapping.Fields.ID, Query.Direction.DESCENDING).get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if(task.isSuccessful()){
-                            notes = new ArrayList<>();
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                Map<String, Object> doc = document.getData();
-                                String id = document.getId();
-                                Node node = NodeDataMapping.toNode(id, doc);
-                                notes.add(node);
-                            }
-                            Log.d(TAG, "success " + notes.size() + " qnt");
-                            nodeListResponse.initialized(NodeListSourceFirebaseImpl.this);
+            .addOnCompleteListener(object : OnCompleteListener<QuerySnapshot> {
+                override fun onComplete(task: Task<QuerySnapshot>) {
+                    if (task.isSuccessful) {
+                        //var nodeList = ArrayList<Node>()
+                        for (document in task.result!!) {
+                            val doc = document.data
+                            val id = document.id
+                            val node = toNode(id, doc)
+                            nodeList!!.add(node)
                         }
-                        else {
-                            Log.d(TAG, "get failed " + task.getException());
-                        }
+                        Log.d(TAG, "success " + nodeList!!.size + " qnt")
+                        nodeListResponse!!.initialized(this@NodeListSourceFirebaseImpl)
+                    } else {
+                        Log.d(TAG, "get failed " + task.exception)
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "get failed with ", e);
-                    }
-                });
-        return this;
+                }
+            }).addOnFailureListener { e -> Log.d(TAG, "get failed with ", e) }
+        return this
     }
 
-    @Override
-    public ArrayList<Node> getNodeList(){
-        return notes;
+    override fun getNodeList(): ArrayList<Node> {
+        return nodeList
     }
 
-    @Override
-    public int size() {
-        if(notes == null){
-            return 0;
-        }
-        else{
-            return notes.size();
+    override fun size(): Int {
+        return if (nodeList == null) {
+            0
+        } else {
+            nodeList!!.size
         }
     }
 
-    @Override
-    public void deleteNode(int position) {
+    override fun deleteNode(position: Int) {
         // Удалить документ с определённым идентификатором
-        collection.document(notes.get(position).getId()).delete();
-        notes.remove(position);
-
+        collection.document(nodeList!![position].id!!).delete()
+        nodeList!!.removeAt(position)
     }
 
-    @Override
-    public void updateNode(Node node) {
-        String id = node.getId();
+    override fun updateNode(node: Node?) {
+        val id = node!!.id
         // Изменить документ по идентификатору
-        collection.document(id).set(NodeDataMapping.toDocument(node));
+        collection.document(id!!).set(toDocument(node))
     }
 
-    @Override
-    public void addNode(Node node) {
-        collection.add(NodeDataMapping.toDocument(node)).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-            @Override
-            public void onSuccess(DocumentReference documentReference) {
-                String id = documentReference.getId();
-                node.setId(id);
-                collection.document(id).set(NodeDataMapping.toDocument(node));
-
-            }
-        });
+    override fun addNode(node: Node?) {
+        collection.add(toDocument(node!!)).addOnSuccessListener { documentReference ->
+            val id = documentReference.id
+            node.id = id
+            collection.document(id).set(toDocument(node))
+        }
     }
 
-
+    companion object {
+        private const val NOTES_COLECTION = "notes"
+        private const val TAG = "[NodeListSourceFirebaseImpl]"
+        private const val ID = "ID"
+    }
 }

@@ -1,8 +1,8 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import android.view.View;
+import android.view.View
 
-public interface OnItemClickListener {
-    void onItemClick(View view, int position);
-    void onItemLongClick(View view, int position);
+interface OnItemClickListener {
+    fun onItemClick(view: View?, position: Int)
+    fun onItemLongClick(view: View?, position: Int)
 }

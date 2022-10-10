@@ -1,26 +1,33 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import java.util.HashMap;
-import java.util.Map;
 
-public class NodeDataMapping {
-    public static class Fields{
-        public final static String ID = "ID";
-        public final static String TITLE = "TITLE";
-        public final static String DESCRIPTION = "DESCRIPTION";
+import java.util.HashMap
+
+object NodeDataMapping {
+    @JvmStatic
+    fun toNode(
+        id: String?,
+        doc: Map<String?, Any?>
+    ): Node {
+        return Node(
+            doc[Fields.ID] as String?,
+            doc[Fields.TITLE] as String?,
+            doc[Fields.DESCRIPTION] as String?
+        )
     }
-    public static Node toNode(String id, Map<String, Object> doc){
-        Node answer = new Node((String) doc.get(Fields.ID),
-                (String) doc.get(Fields.TITLE),
-                (String) doc.get(Fields.DESCRIPTION));
-        return answer;
+
+    @JvmStatic
+    fun toDocument(node: Node): Map<String, Any?> {
+        val answer: MutableMap<String, Any?> = HashMap()
+        answer[Fields.ID] = node.id
+        answer[Fields.TITLE] = node.title
+        answer[Fields.DESCRIPTION] = node.description
+        return answer
     }
 
-    public static Map<String, Object> toDocument(Node node){
-        Map<String, Object> answer = new HashMap<>();
-        answer.put(Fields.ID, node.getId());
-        answer.put(Fields.TITLE, node.getTitle());
-        answer.put(Fields.DESCRIPTION, node.getDescription());
-        return answer;
+    object Fields {
+        const val ID = "ID"
+        const val TITLE = "TITLE"
+        const val DESCRIPTION = "DESCRIPTION"
     }
 }

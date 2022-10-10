@@ -1,94 +1,59 @@
-package ru.abyzbaev.finalnotes;
+package ru.abyzbaev.finalnotes
 
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
+//import ru.abyzbaev.finalnotes.NodeListSource.nodeList
+//import ru.abyzbaev.finalnotes.Node.title
+import androidx.recyclerview.widget.RecyclerView
+import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.TextView
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+class NotesAdapter : RecyclerView.Adapter<NotesAdapter.ViewHolder>() {
+    private var itemClickListener: OnItemClickListener? = null
 
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
-
-import java.util.ArrayList;
-
-public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
-
-    private OnItemClickListener itemClickListener;
-    //private ArrayList<Node> data;
-    private NodeListSource dataSource;
-
-    public void setItemClickListener(OnItemClickListener itemClickListener){
-        this.itemClickListener = itemClickListener;
+    private var dataSource: NodeListSource? = null
+    fun setItemClickListener(itemClickListener: OnItemClickListener?) {
+        this.itemClickListener = itemClickListener
     }
 
-    public NotesAdapter() {
-        //this.data = data;
-
+    fun setDataSource(dataSource: NodeListSource?) {
+        this.dataSource = dataSource
+        notifyDataSetChanged()
     }
 
-    /*public void setData(ArrayList<Node> data) {
-        this.data = data;
-        notifyDataSetChanged();
-    }*/
-
-    /*public ArrayList<Node> getData() {
-        return data;
-    }*/
-
-    public void setDataSource(NodeListSource dataSource){
-        this.dataSource = dataSource;
-        notifyDataSetChanged();
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val nodeList = dataSource?.getNodeList()
+        holder.title.text = nodeList!![position]!!.title.toString()
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.getTitle().setText(dataSource.getNodeList().get(position).getTitle().toString());
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_view, parent, false)
+        return ViewHolder(view)
     }
 
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view, parent, false);
-        return new ViewHolder(view);
+    override fun getItemCount(): Int {
+        return dataSource!!.size()
     }
 
-    @Override
-    public int getItemCount() {
-        return dataSource.size();
-    }
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        private TextView title;
-
-        public ViewHolder(View view){
-            super(view);
+        init {
             //title = (TextView) view.findViewById(R.id.note_title);
-            title = view.findViewById(R.id.note_title);
-            title.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int position = getAdapterPosition();
-                    if(itemClickListener != null){
-                        itemClickListener.onItemClick(v,position);
-                    }
+            title = view.findViewById(R.id.note_title)
+            title.setOnClickListener { v ->
+                val position = adapterPosition
+                if (itemClickListener != null) {
+                    itemClickListener!!.onItemClick(v, position)
                 }
-            });
-            title.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int position = getAdapterPosition();
-                    if(itemClickListener != null){
-                        itemClickListener.onItemLongClick(v,position);
-                    }
-                    return true;
+            }
+            title.setOnLongClickListener { v ->
+                val position = adapterPosition
+                if (itemClickListener != null) {
+                    itemClickListener!!.onItemLongClick(v, position)
                 }
-            });
-        }
-
-        public TextView getTitle(){
-            return title;
+                true
+            }
         }
     }
 }
