@@ -62,7 +62,7 @@ class NodeFragment : Fragment() {
     }
 
     private val notesFragment: NotesFragment
-        private get() = requireActivity()
+        get() = requireActivity()
             .supportFragmentManager
             .fragments
             .stream()
@@ -80,9 +80,7 @@ class NodeFragment : Fragment() {
         val title = node!!.title
         val description = node!!.description
         val id = node!!.id
-        val answer: Node
-        answer = Node(id, title, description)
-        return answer
+        return Node(id, title, description)
     }
 
     companion object {

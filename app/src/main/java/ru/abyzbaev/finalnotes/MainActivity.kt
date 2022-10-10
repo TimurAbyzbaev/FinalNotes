@@ -10,7 +10,7 @@ import androidx.appcompat.widget.Toolbar
 import ru.abyzbaev.finalnotes.R
 
 class MainActivity : AppCompatActivity() {
-    var notesFragment = NotesFragment()
+    private var notesFragment = NotesFragment()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

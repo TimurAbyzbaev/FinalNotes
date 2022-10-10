@@ -4,7 +4,7 @@ import android.os.Parcelable
 import android.os.Parcel
 import android.os.Parcelable.Creator
 
-class Node : Parcelable {
+open class Node : Parcelable {
     var title: String?
     var description: String?
     var id: String? = null
