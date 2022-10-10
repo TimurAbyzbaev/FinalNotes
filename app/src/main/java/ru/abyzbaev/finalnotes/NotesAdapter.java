@@ -8,35 +8,43 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
-public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> {
+public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder>{
 
     private OnItemClickListener itemClickListener;
-    private ArrayList<Node> data;
+    //private ArrayList<Node> data;
+    private NodeListSource dataSource;
 
     public void setItemClickListener(OnItemClickListener itemClickListener){
         this.itemClickListener = itemClickListener;
     }
 
-    public NotesAdapter(ArrayList<Node> data) {
-        this.data = data;
+    public NotesAdapter() {
+        //this.data = data;
+
     }
 
-    public void setData(ArrayList<Node> data) {
+    /*public void setData(ArrayList<Node> data) {
         this.data = data;
         notifyDataSetChanged();
-    }
+    }*/
 
-    public ArrayList<Node> getData() {
+    /*public ArrayList<Node> getData() {
         return data;
+    }*/
+
+    public void setDataSource(NodeListSource dataSource){
+        this.dataSource = dataSource;
+        notifyDataSetChanged();
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.getTitle().setText(data.get(position).getTitle().toString());
+        holder.getTitle().setText(dataSource.getNodeList().get(position).getTitle().toString());
     }
 
     @NonNull
@@ -48,7 +56,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.ViewHolder> 
 
     @Override
     public int getItemCount() {
-        return data.size();
+        return dataSource.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

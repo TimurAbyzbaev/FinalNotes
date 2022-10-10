@@ -31,13 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class NotesFragment extends Fragment {
-    private ArrayList<Node> notes = new ArrayList<>();
+public class NotesFragment extends Fragment implements NodeListSource{
+    //private ArrayList<Node> notes;
+    private NodeListSource data;
     private RecyclerView recyclerView;
     private NotesAdapter notesAdapter;
     static final String DATA_KEY = "DATA_KEY";
     private SharedPreferences sharedPreferences;
-    public NotesFragment() {
+    public NotesFragment(){
 
 
     }
@@ -45,7 +46,7 @@ public class NotesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+        //sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
 
     }
 
@@ -53,13 +54,24 @@ public class NotesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_notes, container, false);
+        notesAdapter = new NotesAdapter();
+        data = new NodeListSourceFirebaseImpl().init(new NodeListResponse() {
+            @Override
+            public void initialized(NodeListSource nodeListSource) {
+                notesAdapter.notifyDataSetChanged();
+            }
+        });
+        notesAdapter.setDataSource(data);
         recyclerView = view.findViewById(R.id.recycle_view);
         initRecycleView(recyclerView);
         return view;
     }
 
+
+
+
     private void initRecycleView(RecyclerView recyclerView) {
-        notesAdapter = new NotesAdapter(notes);
+        recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(notesAdapter);
         notesAdapter.setItemClickListener(new OnItemClickListener() {
             @Override
@@ -67,34 +79,15 @@ public class NotesFragment extends Fragment {
                 Toast.makeText(getContext(), ((TextView)view).getText(), Toast.LENGTH_SHORT).show();
                 showNodeFragment(position);
             }
-
             @Override
             public void onItemLongClick(View view, int position) {
                 initPopupMenu(view,position);
             }
         });
-
-        String savedData = sharedPreferences.getString(DATA_KEY, null);
-        if(savedData == null){
-            Toast.makeText(requireContext(), "Empty Data", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            try {
-                Type type = new TypeToken<ArrayList<Node>>(){}.getType();
-                notes = new GsonBuilder().create().fromJson(savedData, type);
-                notesAdapter.setData(notes);
-
-            }
-            catch (Exception e){
-                Toast.makeText(requireContext(), "Ошибка загрузки данных", Toast.LENGTH_SHORT).show();
-            }
-        }
-
-
     }
 
     private void showNodeFragment(int position) {
-        NodeFragment nodeFragment = NodeFragment.newInstance(notes.get(position));
+        NodeFragment nodeFragment = NodeFragment.newInstance(data.getNodeList().get(position));
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .add(R.id.notes_container, nodeFragment)
@@ -112,22 +105,36 @@ public class NotesFragment extends Fragment {
         initRecycleView(recyclerView);
     }
     public ArrayList<Node> getNotes(){
-        return notes;
+        return data.getNodeList();
     }
     public void addNote(){
-        notes.add(new Node("Заметка", ""));
+        data.addNode(new Node("Заметка", "123"));
+        //data.getNodeList();
+        //notesAdapter.setDataSource(data);
         updateData();
-        System.out.println(notes.size());
-    }
-    private void saveData(){
-        String jsonData = new GsonBuilder().create().toJson(notes);
-        sharedPreferences.edit().putString(DATA_KEY,jsonData).apply();
+        //notesAdapter.notifyItemInserted(data.size());
+        System.out.println("size = " + data.size());
     }
 
+
     public void updateData(){
-        notesAdapter.setData(notes);
-        saveData();
+        //notesAdapter.notifyItemInserted();
+        data = new NodeListSourceFirebaseImpl().init(new NodeListResponse() {
+            @Override
+            public void initialized(NodeListSource nodeListSource) {
+                notesAdapter.notifyDataSetChanged();
+            }
+        });
+        notesAdapter.setDataSource(data);
+        initRecycleView(recyclerView);
+        //saveData();
     }
+
+    public void updateData(Node updatedNode){
+        data.updateNode(updatedNode);
+        updateData();
+    }
+
 
     private void initPopupMenu(View view, int position){
         Activity activity = requireActivity();
@@ -139,11 +146,7 @@ public class NotesFragment extends Fragment {
                 switch (item.getItemId()){
                     case R.id.action_popup_delete:
                         //TODO delete note
-                        Toast.makeText(requireContext(),"удаление", Toast.LENGTH_SHORT).show();
-                        Node tempNode = notes.get(position);
-                        notes.remove(position);
-                        updateData();
-                        showSnackbar(position, tempNode);
+                        deleteNode(position);
                         return true;
                     case R.id.action_popup_edit:
                         showNodeFragment(position);
@@ -160,9 +163,52 @@ public class NotesFragment extends Fragment {
                 .setAction("Return", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        notes.add(position, tempNode);
+                        data.addNode(tempNode);
                         updateData();
                     }
                 }).show();
+    }
+
+    @Override
+    public NodeListSource init(NodeListResponse nodeListResponse) {
+        if(nodeListResponse != null){
+            nodeListResponse.initialized(this);
+        }
+        return this;
+    }
+
+    @Override
+    public ArrayList<Node> getNodeList() {
+        return data.getNodeList();
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
+    @Override
+    public void deleteNode(int position) {
+        //TODO deleteNote
+        Toast.makeText(requireContext(),"удаление", Toast.LENGTH_SHORT).show();
+        Node tempNode = data.getNodeList().get(position);
+        //data.getNodeList().remove(position);
+        data.deleteNode(position);
+        updateData();
+        showSnackbar(position, tempNode);
+        
+
+    }
+
+    @Override
+    public void updateNode(Node node) {
+        data.updateNode(node);
+    }
+
+    @Override
+    public void addNode(Node node) {
+        data.getNodeList().add(new Node("Заметка", ""));
+        updateData();
+        System.out.println(data.getNodeList().size());
     }
 }

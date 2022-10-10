@@ -6,11 +6,25 @@ import android.os.Parcelable;
 public class Node implements Parcelable {
     private String title;
     private String description;
+    private String id;
 
     public Node(String title, String description) {
         this.title = title;
         this.description = description;
     }
+    public Node(String id, String title, String description) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+    }
+
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+
 
     protected Node(Parcel in) {
         title = in.readString();

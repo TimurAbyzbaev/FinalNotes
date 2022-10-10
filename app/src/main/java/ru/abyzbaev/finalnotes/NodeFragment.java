@@ -31,7 +31,7 @@ public class NodeFragment extends Fragment {
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String SELECTED_NODE = "SELECTED_NODE";
-    private SharedPreferences sharedPreferences;
+    //private SharedPreferences sharedPreferences;
     private Node node;
 
     public NodeFragment() {
@@ -50,7 +50,7 @@ public class NodeFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sharedPreferences = getActivity().getPreferences(MODE_PRIVATE);
+        //sharedPreferences = getActivity().getPreferences(MODE_PRIVATE);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class NodeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 node.setTitle(title.getText().toString());
-                updateData();
+                updateData(node);
             }
 
             @Override
@@ -105,7 +105,7 @@ public class NodeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 node.setDescription(description.getText().toString());
-                updateData();
+                updateData(node);
             }
 
             @Override
@@ -127,10 +127,20 @@ public class NodeFragment extends Fragment {
                 .get();
     }
 
-    private void updateData(){
-        String jsonData = new GsonBuilder().create().toJson(getNotesFragment().getNotes());
-        sharedPreferences.edit().putString(DATA_KEY,jsonData).apply();
-        getNotesFragment().updateData();
+    private void updateData(Node updatedNode){
+        //String jsonData = new GsonBuilder().create().toJson(getNotesFragment().getNotes());
+        //sharedPreferences.edit().putString(DATA_KEY,jsonData).apply();
+
+        getNotesFragment().updateData(updatedNode);
+    }
+
+    private Node collectNodeData(){
+        String title = node.getTitle();
+        String description = node.getDescription();
+        String id = node.getId();
+        Node answer;
+        answer = new Node(id,title,description);
+        return answer;
     }
 
 }
